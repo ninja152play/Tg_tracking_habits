@@ -19,8 +19,7 @@ services:
   api:
     build: .
     command: python -m uvicorn FastAPI.main:app --host 0.0.0.0 --port 8000
-    environment:
-      DATABASE_URL: postgresql+asyncpg://ninja:1521@postgres:5432/fastapi_db
+
     ports:
       - "8000:8000"
     depends_on:
