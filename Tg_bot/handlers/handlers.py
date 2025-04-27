@@ -14,7 +14,7 @@ async def get_user_info():
 def register_handlers(bot):
     async def refresh_token(message: Message):
         request = {'refresh_token': user_data[message.from_user.id]['refresh_token']}
-        response = requests.post('http://127.0.0.1:8000/api/refresh-token',json=request)
+        response = requests.post('http://api:8000/api/refresh-token',json=request)
         if response.status_code == 200:
             response = response.json()
             user_data[message.from_user.id]['access_token'] = response['access_token']
@@ -62,7 +62,7 @@ def register_handlers(bot):
                 'name': user_data[message.from_user.id]['name'],
                 'tg_id': message.from_user.id}
         user_data.pop(message.from_user.id)
-        response = requests.post('http://127.0.0.1:8000/api/register',json=request)
+        response = requests.post('http://api:8000/api/register',json=request)
         if response.status_code == 200:
             response = response.json()
             user_data[message.from_user.id] = {'access_token': response['access_token']}
@@ -95,7 +95,7 @@ def register_handlers(bot):
                    'tg_id': message.from_user.id
                    }
         user_data.pop(message.from_user.id)
-        response = requests.post('http://127.0.0.1:8000/api/login',json=request)
+        response = requests.post('http://api:8000/api/login',json=request)
         if response.status_code == 200:
             response = response.json()
             user_data[message.from_user.id] = {'access_token': response['access_token']}
@@ -112,13 +112,13 @@ def register_handlers(bot):
             await bot.send_message(message.chat.id, 'Вы не авторизованы! Введите команду /login для авторизации или /register для регистрации.')
         else:
             headers = {"Authorization": f'Bearer {user_data[message.from_user.id]["access_token"]}'}
-            response = requests.get('http://127.0.0.1:8000/api/habits', headers=headers)
+            response = requests.get('http://api:8000/api/habits', headers=headers)
             if response.status_code == 200:
                 response = response.json()
                 text = 'Ваши привычки:\n\n'
                 for habit in response:
                     text += f'Название привычки: {habit["name"]}\nСтатус: {habit["status"]}\n\n'
-                else:
+                if not response:
                     text += "У вас нет привычек!"
                 await bot.send_message(message.chat.id, text, reply_markup=habits_menu())
             elif response.status_code == 401:
@@ -133,7 +133,7 @@ def register_handlers(bot):
     @bot.message_handler(func=lambda msg: user_states.get(msg.from_user.id) == "habit_title")
     async def get_habit_title(message: Message):
         user_states.pop(message.from_user.id)
-        response = requests.post('http://127.0.0.1:8000/api/habits',
+        response = requests.post('http://api:8000/api/habits',
                                  json={'name': message.text},
                                  headers={'Authorization': f'Bearer {user_data[message.from_user.id]["access_token"]}'})
         if response.status_code == 200:
@@ -155,7 +155,7 @@ def register_handlers(bot):
     @bot.message_handler(func=lambda msg: user_states.get(msg.from_user.id) == "new_habit_title")
     async def get_new_habit_title(message: Message):
         user_states.pop(message.from_user.id)
-        response = requests.patch('http://127.0.0.1:8000/api/habits',
+        response = requests.patch('http://api:8000/api/habits',
                                 json={'old_title': user_data[message.from_user.id]['habit_title'],
                                 'new_title': message.text},
                                 headers={'Authorization': f'Bearer {user_data[message.from_user.id]["access_token"]}'})
@@ -172,7 +172,7 @@ def register_handlers(bot):
     @bot.message_handler(func=lambda msg: user_states.get(msg.from_user.id) == "habit_title_status_edit")
     async def get_habit_title_on_status_edit(message: Message):
         user_states.pop(message.from_user.id)
-        response = requests.put('http://127.0.0.1:8000/api/habits',
+        response = requests.put('http://api:8000/api/habits',
                                 json={'title': message.text},
                                 headers={'Authorization': f'Bearer {user_data[message.from_user.id]["access_token"]}'})
         if response.status_code == 200:
@@ -188,7 +188,7 @@ def register_handlers(bot):
     @bot.message_handler(func=lambda msg: user_states.get(msg.from_user.id) == "habit_title_delete")
     async def get_habit_title_on_delete(message: Message):
         user_states.pop(message.from_user.id)
-        response = requests.delete('http://127.0.0.1:8000/api/habits',
+        response = requests.delete('http://api:8000/api/habits',
                                 json={'title': message.text},
                                 headers={'Authorization': f'Bearer {user_data[message.from_user.id]["access_token"]}'})
         if response.status_code == 200:
